@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" type="image/svg+xml" href="/kplrms.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Primary Meta Tags -->
+		<title>KP-LRMS - Learning Resource Management System</title>
+		<meta
+			name="title"
+			content="KP-LRMS - Learning Resource Management System"
+		/>
+		<meta
+			name="description"
+			content="KP-LRMS is a comprehensive Learning Resource Management System for managing links, credentials, documents, tasks, and URLs with QR codes. A brand of kalawatiputra.com"
+		/>
+		<meta
+			name="keywords"
+			content="learning management, resource management, link management, credential storage, document management, task management, URL shortener, QR codes, kalawatiputra"
+		/>
+		<meta name="author" content="Kalawatiputra" />
+		<meta name="robots" content="index, follow" />
+		<meta name="language" content="English" />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://kalawatiputra.com/" />
+		<meta
+			property="og:title"
+			content="KP-LRMS - Learning Resource Management System"
+		/>
+		<meta
+			property="og:description"
+			content="Comprehensive Learning Resource Management System for managing links, credentials, documents, tasks, and URLs with QR codes."
+		/>
+		<meta property="og:site_name" content="KP-LRMS" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content="https://kalawatiputra.com/" />
+		<meta
+			property="twitter:title"
+			content="KP-LRMS - Learning Resource Management System"
+		/>
+		<meta
+			property="twitter:description"
+			content="Comprehensive Learning Resource Management System for managing links, credentials, documents, tasks, and URLs with QR codes."
+		/>
+
+		<!-- Additional Meta Tags -->
+		<meta name="theme-color" content="#4F46E5" />
+		<meta name="msapplication-TileColor" content="#4F46E5" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta
+			name="apple-mobile-web-app-status-bar-style"
+			content="black-translucent"
+		/>
+		<meta name="apple-mobile-web-app-title" content="KP-LRMS" />
+
+		<!-- Preconnect for performance -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+		<script>
+			(() => {
+				try {
+					const root = document.documentElement;
+					const saved = localStorage.getItem("theme");
+					// Default to dark when no saved preference
+					if (saved === "dark" || !saved) {
+						root.classList.add("dark");
+					} else {
+						root.classList.remove("dark");
+					}
+				} catch (e) {}
+			})();
+		</script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.jsx"></script>
+	</body>
+</html>

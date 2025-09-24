@@ -1,0 +1,456 @@
+const { validationResult } = require("express-validator");
+const Document = require("../models/Document");
+const path = require("path");
+const fs = require("fs").promises;
+const axios = require("axios");
+const { notifyOrgPublicResource } = require("./notifications");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../config/cloudinary");
+			try {
+				// Fetch file from Cloudinary
+				const response = await axios.get(document.fileUrl, {
+					responseType: "arraybuffer",
+				});
+
+				const fileBuffer = Buffer.from(response.data);
+				const encodedFilename = encodeURIComponent(document.fileName);
+
+				res.set({
+					"Content-Type": document.mimeType || "application/octet-stream",
+					"Content-Disposition": `attachment; filename="${document.fileName}"; filename*=UTF-8''${encodedFilename}`,
+					"Content-Length": fileBuffer.length,
+					"Cache-Control": "no-cache",
+					"Pragma": "no-cache",
+				});
+
+				res.send(fileBuffer);
+			} catch (fetchError) {
+				console.error("Error fetching file from Cloudinary:", fetchError);
+				return res.status(500).json({
+					success: false,
+					message: "Error retrieving file from storage",
+				});
+			}
+		} else {
+			// Fallback for legacy base64 stored files
+			if (!document.fileData) {
+				return res.status(404).json({
+					success: false,
+					message: "File data not found",
+				});
+			}
+
+			const fileBuffer = Buffer.from(document.fileData, "base64");
+			const encodedFilename = encodeURIComponent(document.fileName);
+
+			res.set({
+				"Content-Type": document.mimeType || "application/octet-stream",
+				"Content-Disposition": `attachment; filename="${document.fileName}"; filename*=UTF-8''${encodedFilename}`,
+				"Content-Length": fileBuffer.length,
+				"Cache-Control": "no-cache",
+				"Pragma": "no-cache",
+			});
+
+			res.send(fileBuffer);
+		}nfig/cloudinary");
+
+// @desc    Get documents visible to the current user
+// @route   GET /api/documents
+// @access  Private
+const getDocuments = async (req, res) => {
+	try {
+		// Build visibility-aware query
+		const query = {};
+		if (req.user.role === "admin") {
+			// Admin can see all
+		} else {
+			// Non-admin: public active, organization active, or own any status
+			query.$or = [
+				{ status: "active", visibility: "public" },
+				{
+					status: "active",
+					visibility: "organization",
+					organization: req.user.organization,
+				},
+				{ addedBy: req.user._id },
+			];
+		}
+
+		const documents = await Document.find(query)
+			.populate("addedBy", "fullName email")
+			.sort({ createdAt: -1 });
+
+		res.status(200).json({
+			success: true,
+			count: documents.length,
+			data: documents,
+		});
+	} catch (error) {
+		console.error("Get documents error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while fetching documents",
+		});
+	}
+};
+
+// @desc    Get single document
+// @route   GET /api/documents/:id
+// @access  Private
+const getDocument = async (req, res) => {
+	try {
+		const document = await Document.findById(req.params.id).populate(
+			"addedBy",
+			"fullName email"
+		);
+
+		if (!document) {
+			return res.status(404).json({
+				success: false,
+				message: "Document not found",
+			});
+		}
+
+		// Check access permissions
+		if (req.user.role !== "admin") {
+			const isOwner =
+				document.addedBy._id.toString() === req.user._id.toString();
+			const isPublic =
+				document.status === "active" && document.visibility === "public";
+			const isOrg =
+				document.status === "active" &&
+				document.visibility === "organization" &&
+				document.organization &&
+				document.organization === req.user.organization;
+
+			if (!isOwner && !isPublic && !isOrg) {
+				return res.status(403).json({
+					success: false,
+					message: "Not authorized to access this document",
+				});
+			}
+		}
+
+		res.status(200).json({
+			success: true,
+			data: document,
+		});
+	} catch (error) {
+		console.error("Get document error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while fetching document",
+		});
+	}
+};
+
+// @desc    Upload new document
+// @route   POST /api/documents
+// @access  Private
+const uploadDocument = async (req, res) => {
+	try {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({
+				success: false,
+				message: "Validation failed",
+				errors: errors.array(),
+			});
+		}
+
+		if (!req.file) {
+			return res.status(400).json({
+				success: false,
+				message: "No file uploaded",
+			});
+		}
+
+		const { title, description, category, accessLevel } = req.body;
+		const file = req.file;
+
+		// Generate unique filename
+		const fileExtension = path.extname(file.originalname);
+		const fileName = file.originalname;
+		const fileType = file.mimetype;
+		const size = file.size;
+
+		// Upload to Cloudinary
+		console.log("Uploading file to Cloudinary:", fileName);
+		const cloudinaryResult = await uploadToCloudinary(file.buffer, fileName, fileType);
+		
+		console.log("Cloudinary upload successful:", cloudinaryResult.publicId);
+
+		const document = await Document.create({
+			title: title || fileName,
+			description,
+			fileName,
+			originalName: file.originalname,
+			mimeType: fileType,
+			fileSize: size,
+			fileExtension,
+			category: category || "Other",
+			project: req.body.project || "General",
+			fileUrl: cloudinaryResult.url,
+			cloudinaryPublicId: cloudinaryResult.publicId,
+			storageType: "cloudinary",
+			addedBy: req.user._id,
+			organization: req.user.organization,
+			// Map legacy accessLevel from client to visibility
+			visibility: accessLevel || req.body.visibility || "public",
+		});
+
+		await document.populate("addedBy", "fullName email");
+
+		// Don't return file data in response
+		const responseData = document.toObject();
+		responseData.fileData = undefined;
+		responseData.url = document.fileUrl;
+
+		// Notify org members if public
+		if (document.visibility === "public") {
+			await notifyOrgPublicResource({
+				creator: req.user,
+				organization: req.user.organization,
+				resourceType: "Document",
+				resourceId: document._id,
+				title: document.title,
+			});
+		}
+
+		res.status(201).json({
+			success: true,
+			data: responseData,
+		});
+	} catch (error) {
+		console.error("Upload document error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while uploading document",
+		});
+	}
+};
+
+// @desc    Update document
+// @route   PUT /api/documents/:id
+// @access  Private
+const updateDocument = async (req, res) => {
+	try {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({
+				success: false,
+				message: "Validation failed",
+				errors: errors.array(),
+			});
+		}
+
+		let document = await Document.findById(req.params.id);
+
+		if (!document) {
+			return res.status(404).json({
+				success: false,
+				message: "Document not found",
+			});
+		}
+
+		// Check ownership
+		if (
+			document.addedBy.toString() !== req.user._id.toString() &&
+			req.user.role !== "admin"
+		) {
+			return res.status(403).json({
+				success: false,
+				message: "Not authorized to update this document",
+			});
+		}
+
+		// Map accessLevel to visibility if provided
+		if (req.body.accessLevel && !req.body.visibility) {
+			req.body.visibility = req.body.accessLevel;
+			delete req.body.accessLevel;
+		}
+
+		document = await Document.findByIdAndUpdate(req.params.id, req.body, {
+			new: true,
+			runValidators: true,
+		}).populate("addedBy", "fullName email");
+
+		// Don't return file data
+		const responseData = document.toObject();
+		responseData.fileData = undefined;
+		responseData.url = `/api/documents/${document._id}/download`;
+
+		res.status(200).json({
+			success: true,
+			data: responseData,
+		});
+	} catch (error) {
+		console.error("Update document error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while updating document",
+		});
+	}
+};
+
+// @desc    Delete document
+// @route   DELETE /api/documents/:id
+// @access  Private
+const deleteDocument = async (req, res) => {
+	try {
+		const document = await Document.findById(req.params.id);
+
+		if (!document) {
+			return res.status(404).json({
+				success: false,
+				message: "Document not found",
+			});
+		}
+
+		// Check ownership
+		if (
+			document.addedBy.toString() !== req.user._id.toString() &&
+			req.user.role !== "admin"
+		) {
+			return res.status(403).json({
+				success: false,
+				message: "Not authorized to delete this document",
+			});
+		}
+
+		await document.deleteOne();
+
+		res.status(200).json({
+			success: true,
+			message: "Document deleted successfully",
+		});
+	} catch (error) {
+		console.error("Delete document error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while deleting document",
+		});
+	}
+};
+
+// @desc    Download document
+// @route   GET /api/documents/:id/download
+// @access  Private
+const downloadDocument = async (req, res) => {
+	try {
+		const document = await Document.findById(req.params.id);
+
+		if (!document) {
+			return res.status(404).json({
+				success: false,
+				message: "Document not found",
+			});
+		}
+
+		// Check access permissions
+		if (req.user.role !== "admin") {
+			const isOwner = document.addedBy.toString() === req.user._id.toString();
+			const isPublic =
+				document.status === "active" && document.visibility === "public";
+			const isOrg =
+				document.status === "active" &&
+				document.visibility === "organization" &&
+				document.organization &&
+				document.organization === req.user.organization;
+
+			if (!isOwner && !isPublic && !isOrg) {
+				return res.status(403).json({
+					success: false,
+					message: "Not authorized to download this document",
+				});
+			}
+		}
+
+		// Convert base64 back to buffer
+		const fileBuffer = Buffer.from(document.fileData, "base64");
+
+		// Ensure proper filename encoding for special characters
+		const encodedFilename = encodeURIComponent(document.fileName);
+
+		res.set({
+			"Content-Type": document.mimeType || "application/octet-stream",
+			"Content-Disposition": `attachment; filename="${document.fileName}"; filename*=UTF-8''${encodedFilename}`,
+			"Content-Length": fileBuffer.length,
+			"Cache-Control": "no-cache",
+			Pragma: "no-cache",
+		});
+
+		res.send(fileBuffer);
+	} catch (error) {
+		console.error("Download document error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while downloading document",
+		});
+	}
+};
+
+// @desc    Preview document
+// @route   GET /api/documents/:id/preview
+// @access  Private
+const previewDocument = async (req, res) => {
+	try {
+		const document = await Document.findById(req.params.id);
+
+		if (!document) {
+			return res.status(404).json({
+				success: false,
+				message: "Document not found",
+			});
+		}
+
+		// Check access permissions (same as download)
+		if (req.user.role !== "admin") {
+			const isOwner = document.addedBy.toString() === req.user._id.toString();
+			const isPublic =
+				document.status === "active" && document.visibility === "public";
+			const isOrg =
+				document.status === "active" &&
+				document.visibility === "organization" &&
+				document.organization &&
+				document.organization === req.user.organization;
+
+			if (!isOwner && !isPublic && !isOrg) {
+				return res.status(403).json({
+					success: false,
+					message: "Not authorized to preview this document",
+				});
+			}
+		}
+
+		// Convert base64 back to buffer
+		const fileBuffer = Buffer.from(document.fileData, "base64");
+
+		// Ensure proper filename encoding for special characters
+		const encodedFilename = encodeURIComponent(document.fileName);
+
+		res.set({
+			"Content-Type": document.mimeType || "application/octet-stream",
+			"Content-Disposition": `inline; filename="${document.fileName}"; filename*=UTF-8''${encodedFilename}`,
+			"Content-Length": fileBuffer.length,
+			"Cache-Control": "public, max-age=3600",
+		});
+
+		res.send(fileBuffer);
+	} catch (error) {
+		console.error("Preview document error:", error);
+		res.status(500).json({
+			success: false,
+			message: "Server error while previewing document",
+		});
+	}
+};
+
+module.exports = {
+	getDocuments,
+	getDocument,
+	uploadDocument,
+	updateDocument,
+	deleteDocument,
+	downloadDocument,
+	previewDocument,
+};
