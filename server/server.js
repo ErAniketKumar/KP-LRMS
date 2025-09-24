@@ -105,6 +105,8 @@ app.get("/api/health", (req, res) => {
 	});
 });
 
+// Catch all handler
+
 // Global error handler
 app.use((err, req, res, next) => {
 	console.error(err.stack);
