@@ -1,6 +1,18 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+const cors = // Health check endpoint
+	app.get("/api/health", (req, res) => {
+		res.status(200).json({
+			success: true,
+			message: "Server is running properly",
+			timestamp: new Date().toISOString(),
+		});
+	});
+
+// Debug endpoint (TEMPORARY - for troubleshooting email URLs)
+app.use("/api/debug", require("./routes/debug"));
+
+// Catch all handlercors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
