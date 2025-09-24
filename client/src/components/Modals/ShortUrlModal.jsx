@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import {
 	X,
 	Link as LinkIcon,
@@ -61,15 +62,24 @@ const ShortUrlModal = ({ isOpen, onClose, onSuccess }) => {
 				onClose();
 
 				// Show success message with the short URL
-				alert(
-					`Short URL created successfully!\\n\\nShort URL: ${data.shortUrl}`
-				);
+				toast.success(`Short URL created successfully!`);
+
+				// Copy short URL to clipboard
+				if (navigator.clipboard) {
+					navigator.clipboard.writeText(data.shortUrl);
+					toast.success("Short URL copied to clipboard!");
+				}
 			} else {
-				alert(data.message || "Failed to create short URL");
+				// Handle validation errors
+				if (data.errors && Array.isArray(data.errors)) {
+					data.errors.forEach((error) => toast.error(error.msg));
+				} else {
+					toast.error(data.message || "Failed to create short URL");
+				}
 			}
 		} catch (error) {
 			console.error("Error creating short URL:", error);
-			alert("Failed to create short URL. Please try again.");
+			toast.error("Failed to create short URL. Please try again.");
 		} finally {
 			setLoading(false);
 		}

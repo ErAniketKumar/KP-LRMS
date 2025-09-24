@@ -123,7 +123,7 @@ const createShortUrl = async (req, res) => {
 			maxClicks,
 		} = req.body;
 
-		// Validate original URL
+		// Validate and normalize original URL
 		if (!originalUrl) {
 			return res.status(400).json({
 				success: false,
@@ -131,9 +131,15 @@ const createShortUrl = async (req, res) => {
 			});
 		}
 
+		// Add protocol if missing
+		let normalizedUrl = originalUrl;
+		if (!/^https?:\/\//i.test(normalizedUrl)) {
+			normalizedUrl = `https://${normalizedUrl}`;
+		}
+
 		// Create short URL data
 		const shortUrlData = {
-			originalUrl,
+			originalUrl: normalizedUrl,
 			title,
 			description,
 			createdBy: req.user._id,

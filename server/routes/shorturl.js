@@ -28,8 +28,8 @@ router
 			body("originalUrl")
 				.notEmpty()
 				.withMessage("Original URL is required")
-				.isURL({ require_protocol: true })
-				.withMessage("Please provide a valid URL with protocol (http/https)"),
+				.isURL({ require_protocol: false })
+				.withMessage("Please provide a valid URL"),
 			body("title")
 				.optional()
 				.isLength({ max: 200 })
