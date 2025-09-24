@@ -1,28 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = // Health check endpoint
-	app.get("/api/health", (req, res) => {
-		res.status(200).json({
-			success: true,
-			message: "Server is running properly",
-			timestamp: new Date().toISOString(),
-		});
-	});
-
-// Debug endpoint (TEMPORARY - for troubleshooting email URLs)
-app.use("/api/debug", require("./routes/debug"));
-
-// Catch all handlercors");
+const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 const connectDB = require("./config/database");
-
-console.log("=== Environment Variables Debug ===");
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("CLIENT_URL:", process.env.CLIENT_URL);
-console.log("PORT:", process.env.PORT);
-console.log("====================================");
 
 const app = express();
 
@@ -104,8 +86,6 @@ app.get("/api/health", (req, res) => {
 		timestamp: new Date().toISOString(),
 	});
 });
-
-// Catch all handler
 
 // Global error handler
 app.use((err, req, res, next) => {
