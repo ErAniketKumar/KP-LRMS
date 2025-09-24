@@ -6,6 +6,12 @@ const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 const connectDB = require("./config/database");
 
+console.log("=== Environment Variables Debug ===");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("CLIENT_URL:", process.env.CLIENT_URL);
+console.log("PORT:", process.env.PORT);
+console.log("====================================");
+
 const app = express();
 
 // CORS configuration - place BEFORE security/limiting to ensure preflight succeeds
