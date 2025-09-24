@@ -8,19 +8,11 @@ const AuditLog = require("../models/AuditLog");
 // @access  Public (for registration) / Private (for admin management)
 const getOrganizations = async (req, res) => {
 	try {
-		console.log("getOrganizations called - User authenticated:", !!req.user);
-		console.log("User:", req.user ? req.user.email : "No user");
-
 		// For public access (registration), only return active organizations with basic info
 		if (!req.user) {
 			const organizations = await Organization.getActive().select(
 				"name domain isActive"
 			);
-			console.log(
-				"Returning public organizations (count):",
-				organizations.length
-			);
-			console.log("Sample public org:", organizations[0]);
 			return res.status(200).json({
 				success: true,
 				data: organizations,
@@ -32,20 +24,6 @@ const getOrganizations = async (req, res) => {
 			.populate("createdBy", "fullName email")
 			.populate("updatedBy", "fullName email")
 			.sort({ createdAt: -1 });
-
-		console.log(
-			"Found organizations for authenticated user:",
-			organizations.length
-		);
-		console.log(
-			"First org sample:",
-			organizations[0]
-				? {
-						name: organizations[0].name,
-						isActive: organizations[0].isActive,
-				  }
-				: "No organizations"
-		);
 
 		// Add user count for each organization
 		const organizationsWithCounts = await Promise.all(
@@ -117,14 +95,8 @@ const getOrganization = async (req, res) => {
 // @access  Private (Admin only)
 const createOrganization = async (req, res) => {
 	try {
-		console.log("=== Create Organization Debug ===");
-		console.log("Request body:", req.body);
-		console.log("User:", req.user ? req.user.email : "No user");
-		console.log("User role:", req.user ? req.user.role : "No user");
-
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			console.log("Validation errors:", errors.array());
 			return res.status(400).json({
 				success: false,
 				message: "Validation failed",

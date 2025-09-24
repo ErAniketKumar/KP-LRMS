@@ -7,14 +7,6 @@ const protect = async (req, res, next) => {
 	let token;
 
 	try {
-		console.log("=== Auth Middleware Debug ===");
-		console.log("Method:", req.method);
-		console.log("URL:", req.url);
-		console.log(
-			"Headers:",
-			req.headers.authorization ? "Bearer token present" : "No auth header"
-		);
-
 		// Check for token in header
 		if (
 			req.headers.authorization &&
@@ -28,7 +20,6 @@ const protect = async (req, res, next) => {
 		}
 
 		if (!token) {
-			console.log("No token found in request");
 			return res.status(401).json({
 				success: false,
 				message: "Access denied. No token provided.",
@@ -37,7 +28,6 @@ const protect = async (req, res, next) => {
 
 		// Verify token
 		const decoded = jwt.verify(token, process.env.JWT_SECRET);
-		console.log("Token decoded successfully, user ID:", decoded.id);
 
 		// Get user from database
 		const user = await User.findById(decoded.id).select("-password");
@@ -93,14 +83,7 @@ const protect = async (req, res, next) => {
 // Middleware to authorize specific roles
 const authorize = (...roles) => {
 	return (req, res, next) => {
-		console.log("=== Authorization Debug ===");
-		console.log("Required roles:", roles);
-		console.log("User exists:", !!req.user);
-		console.log("User role:", req.user ? req.user.role : "No user");
-		console.log("User email:", req.user ? req.user.email : "No user");
-
 		if (!req.user) {
-			console.log("Authorization failed: User not authenticated");
 			return res.status(401).json({
 				success: false,
 				message: "User not authenticated",
@@ -108,14 +91,12 @@ const authorize = (...roles) => {
 		}
 
 		if (!roles.includes(req.user.role)) {
-			console.log("Authorization failed: Role not allowed");
 			return res.status(403).json({
 				success: false,
 				message: `Role ${req.user.role} is not authorized to access this resource`,
 			});
 		}
 
-		console.log("Authorization successful");
 		next();
 	};
 };
