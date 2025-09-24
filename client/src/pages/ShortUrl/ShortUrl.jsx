@@ -18,6 +18,10 @@ import ShortUrlModal from "../../components/Modals/ShortUrlModal";
 import QRCodeModal from "../../components/Modals/QRCodeModal";
 import AnalyticsModal from "../../components/Modals/AnalyticsModal";
 
+// API Base URL
+const API_BASE_URL =
+	import.meta.env.VITE_API_URL || "https://kplrms.vercel.app/api";
+
 const ShortUrl = () => {
 	const [shortUrls, setShortUrls] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -32,7 +36,7 @@ const ShortUrl = () => {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("token");
-			const response = await fetch("/api/shorturl", {
+			const response = await fetch(`${API_BASE_URL}/shorturl`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -60,7 +64,7 @@ const ShortUrl = () => {
 
 		try {
 			const token = localStorage.getItem("token");
-			const response = await fetch(`/api/shorturl/${id}`, {
+			const response = await fetch(`${API_BASE_URL}/shorturl/${id}`, {
 				method: "DELETE",
 				headers: {
 					Authorization: `Bearer ${token}`,

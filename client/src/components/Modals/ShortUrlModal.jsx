@@ -7,6 +7,10 @@ import {
 	MousePointer,
 } from "lucide-react";
 
+// API Base URL
+const API_BASE_URL =
+	import.meta.env.VITE_API_URL || "https://kplrms.vercel.app/api";
+
 const ShortUrlModal = ({ isOpen, onClose, onSuccess }) => {
 	const [formData, setFormData] = useState({
 		originalUrl: "",
@@ -25,7 +29,7 @@ const ShortUrlModal = ({ isOpen, onClose, onSuccess }) => {
 
 		try {
 			const token = localStorage.getItem("token");
-			const response = await fetch("/api/shorturl", {
+			const response = await fetch(`${API_BASE_URL}/shorturl`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
