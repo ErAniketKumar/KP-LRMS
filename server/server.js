@@ -23,7 +23,7 @@ app.use(
 
 			// Check if origin is in allowed origins or is a Vercel deployment
 			if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
-				callback(null, true);
+				callback(null, false);
 			} else {
 				callback(new Error("Not allowed by CORS"));
 			}
