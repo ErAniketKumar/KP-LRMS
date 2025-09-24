@@ -117,8 +117,14 @@ const getOrganization = async (req, res) => {
 // @access  Private (Admin only)
 const createOrganization = async (req, res) => {
 	try {
+		console.log("=== Create Organization Debug ===");
+		console.log("Request body:", req.body);
+		console.log("User:", req.user ? req.user.email : "No user");
+		console.log("User role:", req.user ? req.user.role : "No user");
+
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
+			console.log("Validation errors:", errors.array());
 			return res.status(400).json({
 				success: false,
 				message: "Validation failed",
