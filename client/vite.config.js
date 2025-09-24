@@ -25,7 +25,10 @@ export default defineConfig({
 		// Proxy API requests to backend server
 		proxy: {
 			"/api": {
-				target: "http://localhost:5000",
+				target:
+					process.env.VITE_API_URL ||
+					"https://kplrms.vercel.app" ||
+					"http://localhost:5000",
 				changeOrigin: true,
 			},
 		},

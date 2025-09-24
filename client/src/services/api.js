@@ -1,8 +1,10 @@
 import axios from "axios";
 
-// API Base URL
+// API Base URL - Production first with local fallback
 const API_BASE_URL =
-	import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+	import.meta.env.VITE_API_URL || "https://kplrms.vercel.app/api";
+
+console.log("Services API_BASE_URL:", API_BASE_URL);
 
 // Create axios instance
 const api = axios.create({

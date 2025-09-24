@@ -11,7 +11,23 @@ const app = express();
 // CORS configuration - place BEFORE security/limiting to ensure preflight succeeds
 app.use(
 	cors({
-		origin: ["http://localhost:5173", "http://localhost:5174"],
+		origin: function (origin, callback) {
+			// Allow requests with no origin (like mobile apps or curl requests)
+			if (!origin) return callback(null, true);
+
+			const allowedOrigins = [
+				"http://localhost:5173",
+				"http://localhost:5174",
+				"https://kplrms.vercel.app",
+			];
+
+			// Check if origin is in allowed origins or is a Vercel deployment
+			if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+				callback(null, true);
+			} else {
+				callback(new Error("Not allowed by CORS"));
+			}
+		},
 		credentials: true,
 		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 		// Let cors package reflect requested headers by default; avoid being overly restrictive
@@ -106,9 +122,12 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`);
-	console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
-});
+// Only listen when not in production (Vercel handles this)
+if (process.env.NODE_ENV !== "production") {
+	app.listen(PORT, () => {
+		console.log(`Server running on port ${PORT}`);
+		console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+	});
+}
 
 module.exports = app;
