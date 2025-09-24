@@ -18,7 +18,8 @@ app.use(
 			const allowedOrigins = [
 				"http://localhost:5173",
 				"http://localhost:5174",
-				"https://kplrms.vercel.app",
+				"https://kp-ani-lrms.vercel.app", // Frontend production URL
+				"https://kplrms.vercel.app", // Old backend URL for testing
 			];
 
 			// Check if origin is in allowed origins or is a Vercel deployment

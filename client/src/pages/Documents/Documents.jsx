@@ -47,7 +47,7 @@ const Documents = () => {
 			// The server will redirect to Cloudinary URL
 			const token = localStorage.getItem("token");
 			const API_BASE_URL =
-				import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+				import.meta.env.VITE_API_URL || "https://kplrms.vercel.app/api";
 			const downloadUrl = `${API_BASE_URL}/documents/${docId}/download`;
 
 			// Create URL with auth token as query parameter
@@ -71,7 +71,7 @@ const Documents = () => {
 		try {
 			const token = localStorage.getItem("token");
 			const API_BASE_URL =
-				import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+				import.meta.env.VITE_API_URL || "https://kplrms.vercel.app/api";
 			const downloadUrl = `${API_BASE_URL}/documents/${doc._id}/download/${fileIndex}`;
 
 			// Create URL with auth token as query parameter
@@ -96,7 +96,7 @@ const Documents = () => {
 			// The server will redirect to Cloudinary URL
 			const token = localStorage.getItem("token");
 			const API_BASE_URL =
-				import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+				import.meta.env.VITE_API_URL || "https://kplrms.vercel.app/api";
 			const previewUrl = `${API_BASE_URL}/documents/${docId}/preview?token=${encodeURIComponent(
 				token
 			)}`;
