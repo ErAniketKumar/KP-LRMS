@@ -1,6 +1,7 @@
 const ShortUrl = require("../models/ShortUrl");
 const QRCode = require("qrcode");
 const UAParser = require("ua-parser-js");
+const { validationResult } = require("express-validator");
 
 // @desc    Get all short URLs for the authenticated user
 // @route   GET /api/shorturl
@@ -103,6 +104,16 @@ const getShortUrl = async (req, res) => {
 // @access  Private
 const createShortUrl = async (req, res) => {
 	try {
+		// Check for validation errors
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({
+				success: false,
+				message: "Validation failed",
+				errors: errors.array(),
+			});
+		}
+
 		const {
 			originalUrl,
 			title,
