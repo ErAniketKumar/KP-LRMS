@@ -9,6 +9,7 @@ import {
 	CheckCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../services/api";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 
 const Register = () => {
@@ -36,7 +37,7 @@ const Register = () => {
 	useEffect(() => {
 		const fetchOrganizations = async () => {
 			try {
-				const response = await fetch("/api/organizations/public");
+				const response = await fetch(`${API_BASE_URL}/organizations/public`);
 				if (response.ok) {
 					const data = await response.json();
 					setOrganizations(data.data || []);
