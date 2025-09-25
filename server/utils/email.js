@@ -32,11 +32,6 @@ const sendVerificationEmail = async (email, verificationToken, fullName) => {
 
 		const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
 
-		console.log("=== Email Verification Debug ===");
-		console.log("CLIENT_URL from env:", process.env.CLIENT_URL);
-		console.log("Generated verification URL:", verificationUrl);
-		console.log("================================");
-
 		const mailOptions = {
 			from: `KP-LRMS <${process.env.EMAIL_USER}>`,
 			to: email,
@@ -103,11 +98,6 @@ const sendPasswordResetEmail = async (email, resetToken, fullName) => {
 		const transporter = createTransporter();
 
 		const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
-
-		console.log("=== Password Reset Email Debug ===");
-		console.log("CLIENT_URL from env:", process.env.CLIENT_URL);
-		console.log("Generated reset URL:", resetUrl);
-		console.log("===================================");
 
 		const mailOptions = {
 			from: `KP-LRMS <${process.env.EMAIL_USER}>`,
