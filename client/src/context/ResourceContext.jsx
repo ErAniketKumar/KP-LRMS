@@ -29,6 +29,7 @@ const RESOURCE_ACTIONS = {
 
 	// Links
 	SET_LINKS: "SET_LINKS",
+	SET_LINKS_PAGINATION: "SET_LINKS_PAGINATION",
 	ADD_LINK: "ADD_LINK",
 	UPDATE_LINK: "UPDATE_LINK",
 	DELETE_LINK: "DELETE_LINK",
@@ -73,6 +74,14 @@ const initialState = {
 	documents: [],
 	todos: [],
 	credentials: [],
+
+	// Pagination
+	linksPagination: {
+		page: 1,
+		limit: 10,
+		total: 0,
+		pages: 0,
+	},
 };
 
 // Reducer
@@ -100,6 +109,15 @@ const resourceReducer = (state, action) => {
 				...state,
 				links: Array.isArray(action.payload) ? action.payload : [],
 				loading: false,
+			};
+
+		case RESOURCE_ACTIONS.SET_LINKS_PAGINATION:
+			return {
+				...state,
+				linksPagination: {
+					...state.linksPagination,
+					...action.payload,
+				},
 			};
 
 		case RESOURCE_ACTIONS.ADD_LINK:
@@ -302,20 +320,32 @@ export const ResourceProvider = ({ children }) => {
 	}, [handleError]);
 
 	// Links functions
-	const fetchLinks = useCallback(async () => {
-		try {
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: true });
-			const response = await linksAPI.getAll();
-			dispatch({
-				type: RESOURCE_ACTIONS.SET_LINKS,
-				payload: response.data.data,
-			});
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
-		} catch (error) {
-			handleError(error, "Failed to fetch links");
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
-		}
-	}, [handleError]);
+	const fetchLinks = useCallback(
+		async (params = {}) => {
+			try {
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: true });
+				const response = await linksAPI.getAll(params);
+				dispatch({
+					type: RESOURCE_ACTIONS.SET_LINKS,
+					payload: response.data.data,
+				});
+				dispatch({
+					type: RESOURCE_ACTIONS.SET_LINKS_PAGINATION,
+					payload: {
+						page: response.data.pagination?.page || 1,
+						limit: response.data.pagination?.limit || 10,
+						total: response.data.pagination?.total || 0,
+						pages: response.data.pagination?.pages || 0,
+					},
+				});
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
+			} catch (error) {
+				handleError(error, "Failed to fetch links");
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
+			}
+		},
+		[handleError]
+	);
 
 	const createLink = useCallback(
 		async (linkData) => {
@@ -666,6 +696,7 @@ export const ResourceProvider = ({ children }) => {
 };
 
 // Custom hook to use Resource Context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useResource = () => {
 	const context = useContext(ResourceContext);
 	if (!context) {

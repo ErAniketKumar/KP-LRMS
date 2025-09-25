@@ -15,12 +15,14 @@ import { useResource } from "../../context/ResourceContext";
 import LinkModal from "../../components/Modals/LinkModal";
 
 const Links = () => {
-	const { links, fetchLinks, deleteLink, loading } = useResource();
+	const { links, linksPagination, fetchLinks, deleteLink, loading } =
+		useResource();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingLink, setEditingLink] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterCategory, setFilterCategory] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
 
 	// Helper function to format category display names
 	const formatCategoryName = (category) => {
@@ -48,8 +50,13 @@ const Links = () => {
 	};
 
 	useEffect(() => {
-		fetchLinks();
-	}, [fetchLinks]);
+		fetchLinks({
+			page: currentPage,
+			limit: 10,
+			search: searchTerm,
+			category: filterCategory,
+		});
+	}, [fetchLinks, currentPage, searchTerm, filterCategory]);
 
 	const handleEdit = (link) => {
 		setEditingLink(link);
@@ -67,21 +74,7 @@ const Links = () => {
 		setEditingLink(null);
 	};
 
-	const filteredLinks = Array.isArray(links)
-		? links.filter((link) => {
-				const matchesSearch =
-					(link.title?.toLowerCase() || "").includes(
-						searchTerm.toLowerCase()
-					) ||
-					(link.description?.toLowerCase() || "").includes(
-						searchTerm.toLowerCase()
-					) ||
-					(link.url?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-				const matchesCategory =
-					!filterCategory || link.category === filterCategory;
-				return matchesSearch && matchesCategory;
-		  })
-		: [];
+	const filteredLinks = Array.isArray(links) ? links : [];
 
 	const categories = Array.isArray(links)
 		? [...new Set(links.map((link) => link.category).filter(Boolean))]
@@ -339,12 +332,202 @@ const Links = () => {
 				</div>
 			)}
 
+			{/* Pagination */}
+			{linksPagination.total > 10 && (
+				<div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 rounded-b-lg">
+					<div className="flex-1 flex justify-between sm:hidden">
+						<button
+							onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+							disabled={currentPage <= 1}
+							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							Previous
+						</button>
+						<button
+							onClick={() =>
+								setCurrentPage((prev) =>
+									Math.min(linksPagination.pages, prev + 1)
+								)
+							}
+							disabled={currentPage >= linksPagination.pages}
+							className="ml-3 relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							Next
+						</button>
+					</div>
+					<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+						<div>
+							<p className="text-sm text-gray-700 dark:text-gray-300">
+								Showing{" "}
+								<span className="font-medium">
+									{(currentPage - 1) * linksPagination.limit + 1}
+								</span>{" "}
+								to{" "}
+								<span className="font-medium">
+									{Math.min(
+										currentPage * linksPagination.limit,
+										linksPagination.total
+									)}
+								</span>{" "}
+								of <span className="font-medium">{linksPagination.total}</span>{" "}
+								results
+							</p>
+						</div>
+						<div>
+							<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+								<button
+									onClick={() =>
+										setCurrentPage((prev) => Math.max(1, prev - 1))
+									}
+									disabled={currentPage <= 1}
+									className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<span className="sr-only">Previous</span>
+									<svg
+										className="h-5 w-5"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</button>
+								{/* Page numbers */}
+								{Array.from(
+									{ length: Math.min(5, linksPagination.pages) },
+									(_, i) => {
+										const pageNum =
+											Math.max(
+												1,
+												Math.min(linksPagination.pages - 4, currentPage - 2)
+											) + i;
+										if (pageNum > linksPagination.pages) return null;
+										return (
+											<button
+												key={pageNum}
+												onClick={() => setCurrentPage(pageNum)}
+												className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+													currentPage === pageNum
+														? "z-10 bg-indigo-50 dark:bg-indigo-900/50 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+														: "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600"
+												}`}
+											>
+												{pageNum}
+											</button>
+										);
+									}
+								)}
+								<button
+									onClick={() =>
+										setCurrentPage((prev) =>
+											Math.min(linksPagination.pages, prev + 1)
+										)
+									}
+									disabled={currentPage >= linksPagination.pages}
+									className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<span className="sr-only">Next</span>
+									<svg
+										className="h-5 w-5"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</button>
+							</nav>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Modal */}
 			<LinkModal
 				isOpen={isModalOpen}
 				onClose={handleCloseModal}
 				link={editingLink}
 			/>
+
+			{/* Pagination */}
+			{linksPagination.pages > 1 && (
+				<div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+					<div className="text-sm text-gray-700 dark:text-gray-300">
+						Showing {(linksPagination.page - 1) * linksPagination.limit + 1} to{" "}
+						{Math.min(
+							linksPagination.page * linksPagination.limit,
+							linksPagination.total
+						)}{" "}
+						of {linksPagination.total} links
+					</div>
+					<div className="flex items-center space-x-2">
+						<button
+							onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+							disabled={linksPagination.page <= 1 || loading}
+							className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							Previous
+						</button>
+
+						{/* Page numbers */}
+						<div className="flex items-center space-x-1">
+							{Array.from(
+								{ length: Math.min(5, linksPagination.pages) },
+								(_, i) => {
+									let pageNum;
+									if (linksPagination.pages <= 5) {
+										pageNum = i + 1;
+									} else if (linksPagination.page <= 3) {
+										pageNum = i + 1;
+									} else if (
+										linksPagination.page >=
+										linksPagination.pages - 2
+									) {
+										pageNum = linksPagination.pages - 4 + i;
+									} else {
+										pageNum = linksPagination.page - 2 + i;
+									}
+
+									return (
+										<button
+											key={pageNum}
+											onClick={() => setCurrentPage(pageNum)}
+											disabled={loading}
+											className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+												linksPagination.page === pageNum
+													? "bg-blue-600 text-white border-blue-600"
+													: "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+											} disabled:opacity-50 disabled:cursor-not-allowed`}
+										>
+											{pageNum}
+										</button>
+									);
+								}
+							)}
+						</div>
+
+						<button
+							onClick={() =>
+								setCurrentPage((prev) =>
+									Math.min(linksPagination.pages, prev + 1)
+								)
+							}
+							disabled={
+								linksPagination.page >= linksPagination.pages || loading
+							}
+							className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							Next
+						</button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

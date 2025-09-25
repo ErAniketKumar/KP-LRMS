@@ -33,7 +33,17 @@ api.interceptors.request.use(
 
 // Links API
 export const linksAPI = {
-	getAll: () => api.get("/links?limit=10&sortBy=createdAt&sortOrder=desc"), // Get 10 most recent links
+	getAll: (params = {}) => {
+		const queryParams = new URLSearchParams();
+		queryParams.set("limit", params.limit || 10);
+		queryParams.set("page", params.page || 1);
+		if (params.search) queryParams.set("search", params.search);
+		if (params.category) queryParams.set("category", params.category);
+		if (params.sortBy) queryParams.set("sortBy", params.sortBy);
+		if (params.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+
+		return api.get(`/links?${queryParams.toString()}`);
+	},
 	getById: (id) => api.get(`/links/${id}`),
 	create: (data) => api.post("/links", data),
 	update: (id, data) => api.put(`/links/${id}`, data),
