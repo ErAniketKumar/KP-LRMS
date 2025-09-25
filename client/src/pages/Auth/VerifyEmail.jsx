@@ -11,7 +11,7 @@ const VerifyEmail = () => {
 	const [verificationStatus, setVerificationStatus] = useState(null); // null, 'success', 'error'
 	const [searchParams] = useSearchParams();
 
-	const { resendVerificationEmail, user, verifyEmail } = useAuth();
+	const { resendVerification, user, verifyEmail } = useAuth();
 
 	const token = searchParams.get("token");
 
@@ -44,7 +44,7 @@ const VerifyEmail = () => {
 		setMessage("");
 
 		try {
-			await resendVerificationEmail();
+			await resendVerification(user?.email);
 			setMessage("Verification email sent successfully!");
 		} catch (err) {
 			setMessage(err.message || "Failed to resend verification email");
