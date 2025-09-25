@@ -52,7 +52,17 @@ export const linksAPI = {
 
 // Documents API
 export const documentsAPI = {
-	getAll: () => api.get("/documents"),
+	getAll: (params = {}) => {
+		const queryParams = new URLSearchParams();
+		queryParams.set("limit", params.limit || 10);
+		queryParams.set("page", params.page || 1);
+		if (params.search) queryParams.set("search", params.search);
+		if (params.type) queryParams.set("type", params.type);
+		if (params.sortBy) queryParams.set("sortBy", params.sortBy);
+		if (params.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+
+		return api.get(`/documents?${queryParams.toString()}`);
+	},
 	getById: (id) => api.get(`/documents/${id}`),
 	upload: (formData) =>
 		api.post("/documents", formData, {
@@ -86,8 +96,19 @@ export const todosAPI = {
 
 // Credentials API
 export const credentialsAPI = {
-	getAll: (includePasswords = false) =>
-		api.get(`/credentials${includePasswords ? "?includePasswords=true" : ""}`),
+	getAll: (params = {}) => {
+		const queryParams = new URLSearchParams();
+		queryParams.set("limit", params.limit || 10);
+		queryParams.set("page", params.page || 1);
+		if (params.search) queryParams.set("search", params.search);
+		if (params.category) queryParams.set("category", params.category);
+		if (params.includePasswords !== undefined)
+			queryParams.set("includePasswords", params.includePasswords);
+		if (params.sortBy) queryParams.set("sortBy", params.sortBy);
+		if (params.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+
+		return api.get(`/credentials?${queryParams.toString()}`);
+	},
 	getById: (id) => api.get(`/credentials/${id}`),
 	create: (data) => api.post("/credentials", data),
 	update: (id, data) => api.put(`/credentials/${id}`, data),

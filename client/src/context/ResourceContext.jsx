@@ -36,6 +36,7 @@ const RESOURCE_ACTIONS = {
 
 	// Documents
 	SET_DOCUMENTS: "SET_DOCUMENTS",
+	SET_DOCUMENTS_PAGINATION: "SET_DOCUMENTS_PAGINATION",
 	ADD_DOCUMENT: "ADD_DOCUMENT",
 	UPDATE_DOCUMENT: "UPDATE_DOCUMENT",
 	DELETE_DOCUMENT: "DELETE_DOCUMENT",
@@ -49,6 +50,7 @@ const RESOURCE_ACTIONS = {
 
 	// Credentials
 	SET_CREDENTIALS: "SET_CREDENTIALS",
+	SET_CREDENTIALS_PAGINATION: "SET_CREDENTIALS_PAGINATION",
 	ADD_CREDENTIAL: "ADD_CREDENTIAL",
 	UPDATE_CREDENTIAL: "UPDATE_CREDENTIAL",
 	DELETE_CREDENTIAL: "DELETE_CREDENTIAL",
@@ -77,6 +79,18 @@ const initialState = {
 
 	// Pagination
 	linksPagination: {
+		page: 1,
+		limit: 10,
+		total: 0,
+		pages: 0,
+	},
+	documentsPagination: {
+		page: 1,
+		limit: 10,
+		total: 0,
+		pages: 0,
+	},
+	credentialsPagination: {
 		page: 1,
 		limit: 10,
 		total: 0,
@@ -116,6 +130,24 @@ const resourceReducer = (state, action) => {
 				...state,
 				linksPagination: {
 					...state.linksPagination,
+					...action.payload,
+				},
+			};
+
+		case RESOURCE_ACTIONS.SET_DOCUMENTS_PAGINATION:
+			return {
+				...state,
+				documentsPagination: {
+					...state.documentsPagination,
+					...action.payload,
+				},
+			};
+
+		case RESOURCE_ACTIONS.SET_CREDENTIALS_PAGINATION:
+			return {
+				...state,
+				credentialsPagination: {
+					...state.credentialsPagination,
 					...action.payload,
 				},
 			};
@@ -399,20 +431,32 @@ export const ResourceProvider = ({ children }) => {
 	);
 
 	// Documents functions
-	const fetchDocuments = useCallback(async () => {
-		try {
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: true });
-			const response = await documentsAPI.getAll();
-			dispatch({
-				type: RESOURCE_ACTIONS.SET_DOCUMENTS,
-				payload: response.data.data,
-			});
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
-		} catch (error) {
-			handleError(error, "Failed to fetch documents");
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
-		}
-	}, [handleError]);
+	const fetchDocuments = useCallback(
+		async (params = {}) => {
+			try {
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: true });
+				const response = await documentsAPI.getAll(params);
+				dispatch({
+					type: RESOURCE_ACTIONS.SET_DOCUMENTS,
+					payload: response.data.data,
+				});
+				dispatch({
+					type: RESOURCE_ACTIONS.SET_DOCUMENTS_PAGINATION,
+					payload: {
+						page: response.data.pagination?.page || 1,
+						limit: response.data.pagination?.limit || 10,
+						total: response.data.pagination?.total || 0,
+						pages: response.data.pagination?.pages || 0,
+					},
+				});
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
+			} catch (error) {
+				handleError(error, "Failed to fetch documents");
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
+			}
+		},
+		[handleError]
+	);
 
 	const uploadDocument = useCallback(
 		async (formData) => {
@@ -557,20 +601,35 @@ export const ResourceProvider = ({ children }) => {
 	);
 
 	// Credentials functions
-	const fetchCredentials = useCallback(async () => {
-		try {
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: true });
-			const response = await credentialsAPI.getAll(true); // Include passwords for display
-			dispatch({
-				type: RESOURCE_ACTIONS.SET_CREDENTIALS,
-				payload: response.data.data,
-			});
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
-		} catch (error) {
-			handleError(error, "Failed to fetch credentials");
-			dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
-		}
-	}, [handleError]);
+	const fetchCredentials = useCallback(
+		async (params = {}) => {
+			try {
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: true });
+				const response = await credentialsAPI.getAll({
+					...params,
+					includePasswords: true, // Always include passwords for display
+				});
+				dispatch({
+					type: RESOURCE_ACTIONS.SET_CREDENTIALS,
+					payload: response.data.data,
+				});
+				dispatch({
+					type: RESOURCE_ACTIONS.SET_CREDENTIALS_PAGINATION,
+					payload: {
+						page: response.data.pagination?.page || 1,
+						limit: response.data.pagination?.limit || 10,
+						total: response.data.pagination?.total || 0,
+						pages: response.data.pagination?.pages || 0,
+					},
+				});
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
+			} catch (error) {
+				handleError(error, "Failed to fetch credentials");
+				dispatch({ type: RESOURCE_ACTIONS.SET_LOADING, payload: false });
+			}
+		},
+		[handleError]
+	);
 
 	const createCredential = useCallback(
 		async (credData) => {

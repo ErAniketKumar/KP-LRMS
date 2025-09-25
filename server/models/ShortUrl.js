@@ -7,14 +7,6 @@ const shortUrlSchema = new mongoose.Schema(
 		originalUrl: {
 			type: String,
 			required: [true, "Original URL is required"],
-			validate: {
-				validator: function (v) {
-					return /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
-						v
-					);
-				},
-				message: "Please provide a valid URL",
-			},
 		},
 
 		// Short URL components

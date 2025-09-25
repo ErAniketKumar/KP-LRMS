@@ -19,19 +19,41 @@ import { useResource } from "../../context/ResourceContext";
 import CredentialModal from "../../components/Modals/CredentialModal";
 
 const Credentials = () => {
-	const { credentials, fetchCredentials, deleteCredential, loading } =
-		useResource();
+	const {
+		credentials,
+		credentialsPagination,
+		fetchCredentials,
+		deleteCredential,
+		loading,
+	} = useResource();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingCredential, setEditingCredential] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterCategory, setFilterCategory] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [searchInput, setSearchInput] = useState("");
 	const [visiblePasswords, setVisiblePasswords] = useState({});
 	const [copied, setCopied] = useState({});
 
+	const handleSearch = () => {
+		setSearchTerm(searchInput);
+		setCurrentPage(1);
+	};
+
+	const handleFilterChange = (category) => {
+		setFilterCategory(category);
+		setCurrentPage(1);
+	};
+
 	useEffect(() => {
-		fetchCredentials();
-	}, [fetchCredentials]);
+		fetchCredentials({
+			page: currentPage,
+			limit: 10,
+			search: searchTerm,
+			category: filterCategory,
+		});
+	}, [fetchCredentials, currentPage, searchTerm, filterCategory]);
 
 	const handleEdit = (credential) => {
 		setEditingCredential(credential);
@@ -75,25 +97,6 @@ const Credentials = () => {
 			console.error("Failed to copy:", error);
 		}
 	};
-
-	const filteredCredentials = Array.isArray(credentials)
-		? credentials.filter((cred) => {
-				const matchesSearch =
-					(cred.title?.toLowerCase() || "").includes(
-						searchTerm.toLowerCase()
-					) ||
-					(cred.username?.toLowerCase() || "").includes(
-						searchTerm.toLowerCase()
-					) ||
-					(cred.email?.toLowerCase() || "").includes(
-						searchTerm.toLowerCase()
-					) ||
-					(cred.url?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-				const matchesCategory =
-					!filterCategory || cred.category === filterCategory;
-				return matchesSearch && matchesCategory;
-		  })
-		: [];
 
 	const categories = Array.isArray(credentials)
 		? [...new Set(credentials.map((cred) => cred.category).filter(Boolean))]
@@ -176,8 +179,8 @@ const Credentials = () => {
 						Credentials Management
 					</h1>
 					<p className="text-gray-600 dark:text-gray-400 mt-1">
-						Securely store and manage your credentials ({credentials.length}{" "}
-						total)
+						Securely store and manage your credentials (
+						{credentialsPagination.total || credentials.length} total)
 					</p>
 				</div>
 				<button
@@ -197,16 +200,23 @@ const Credentials = () => {
 						<input
 							type="text"
 							placeholder="Search credentials..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+							value={searchInput}
+							onChange={(e) => setSearchInput(e.target.value)}
+							onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+							className="w-full pl-10 pr-20 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 						/>
+						<button
+							onClick={handleSearch}
+							className="absolute right-2 top-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-md transition-colors"
+						>
+							Search
+						</button>
 					</div>
 					<div className="relative">
 						<Filter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
 						<select
 							value={filterCategory}
-							onChange={(e) => setFilterCategory(e.target.value)}
+							onChange={(e) => handleFilterChange(e.target.value)}
 							className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 						>
 							<option value="">All Categories</option>
@@ -221,7 +231,7 @@ const Credentials = () => {
 			</div>
 
 			{/* Credentials Grid */}
-			{filteredCredentials.length === 0 ? (
+			{credentials.length === 0 ? (
 				<div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
 					<div className="flex items-center justify-center h-64">
 						<div className="text-center">
@@ -249,7 +259,7 @@ const Credentials = () => {
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{filteredCredentials.map((credential) => (
+					{credentials.map((credential) => (
 						<div
 							key={credential._id}
 							className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition-shadow"
@@ -355,7 +365,7 @@ const Credentials = () => {
 										<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
 											Password:
 										</span>
-										<span className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+										<span className="text-sm text-gray-600 dark:text-gray-400 font-mono truncate max-w-32">
 											{visiblePasswords[credential._id]
 												? credential.password || "[No password set]"
 												: "••••••••"}
@@ -399,7 +409,7 @@ const Credentials = () => {
 											<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
 												Password 2:
 											</span>
-											<span className="text-sm text-gray-600 dark:text-gray-400 font-mono">
+											<span className="text-sm text-gray-600 dark:text-gray-400 font-mono truncate max-w-32">
 												{visiblePasswords[credential._id]
 													? credential.password2
 													: "••••••••"}
@@ -461,6 +471,83 @@ const Credentials = () => {
 							</div>
 						</div>
 					))}
+				</div>
+			)}
+
+			{/* Pagination */}
+			{credentialsPagination.pages > 1 && (
+				<div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+					<div className="text-sm text-gray-700 dark:text-gray-300">
+						Showing{" "}
+						{(credentialsPagination.page - 1) * credentialsPagination.limit + 1}{" "}
+						to{" "}
+						{Math.min(
+							credentialsPagination.page * credentialsPagination.limit,
+							credentialsPagination.total
+						)}{" "}
+						of {credentialsPagination.total} credentials
+					</div>
+					<div className="flex items-center space-x-2">
+						<button
+							onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+							disabled={credentialsPagination.page <= 1 || loading}
+							className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							Previous
+						</button>
+
+						{/* Page numbers */}
+						<div className="flex items-center space-x-1">
+							{Array.from(
+								{ length: Math.min(5, credentialsPagination.pages) },
+								(_, i) => {
+									let pageNum;
+									if (credentialsPagination.pages <= 5) {
+										pageNum = i + 1;
+									} else if (credentialsPagination.page <= 3) {
+										pageNum = i + 1;
+									} else if (
+										credentialsPagination.page >=
+										credentialsPagination.pages - 2
+									) {
+										pageNum = credentialsPagination.pages - 4 + i;
+									} else {
+										pageNum = credentialsPagination.page - 2 + i;
+									}
+
+									return (
+										<button
+											key={pageNum}
+											onClick={() => setCurrentPage(pageNum)}
+											disabled={loading}
+											className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+												credentialsPagination.page === pageNum
+													? "bg-purple-600 text-white border-purple-600"
+													: "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+											} disabled:opacity-50 disabled:cursor-not-allowed`}
+										>
+											{pageNum}
+										</button>
+									);
+								}
+							)}
+						</div>
+
+						<button
+							onClick={() =>
+								setCurrentPage((prev) =>
+									Math.min(credentialsPagination.pages, prev + 1)
+								)
+							}
+							disabled={
+								credentialsPagination.page >= credentialsPagination.pages ||
+								loading
+							}
+							className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							Next
+						</button>
+					</div>
 				</div>
 			)}
 

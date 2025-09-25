@@ -18,17 +18,40 @@ import { useResource } from "../../context/ResourceContext";
 import DocumentModal from "../../components/Modals/DocumentModal";
 
 const Documents = () => {
-	const { documents, fetchDocuments, deleteDocument, loading } = useResource();
+	const {
+		documents,
+		documentsPagination,
+		fetchDocuments,
+		deleteDocument,
+		loading,
+	} = useResource();
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterType, setFilterType] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [searchInput, setSearchInput] = useState("");
 	const [downloadingIds, setDownloadingIds] = useState(new Set());
 	const [previewingIds, setPreviewingIds] = useState(new Set());
 
+	const handleSearch = () => {
+		setSearchTerm(searchInput);
+		setCurrentPage(1);
+	};
+
+	const handleFilterChange = (type) => {
+		setFilterType(type);
+		setCurrentPage(1);
+	};
+
 	useEffect(() => {
-		fetchDocuments();
-	}, [fetchDocuments]);
+		fetchDocuments({
+			page: currentPage,
+			limit: 10,
+			search: searchTerm,
+			type: filterType,
+		});
+	}, [fetchDocuments, currentPage, searchTerm, filterType]);
 
 	const handleDelete = async (id) => {
 		if (window.confirm("Are you sure you want to delete this document?")) {
@@ -155,17 +178,7 @@ const Documents = () => {
 		return false;
 	};
 
-	const filteredDocuments = Array.isArray(documents)
-		? documents.filter((doc) => {
-				const matchesSearch =
-					(doc.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-					(doc.description?.toLowerCase() || "").includes(
-						searchTerm.toLowerCase()
-					);
-				const matchesType = !filterType || doc.mimeType === filterType;
-				return matchesSearch && matchesType;
-		  })
-		: [];
+	const filteredDocuments = Array.isArray(documents) ? documents : [];
 
 	const fileTypes = Array.isArray(documents)
 		? [...new Set(documents.map((doc) => doc.mimeType).filter(Boolean))]
@@ -301,16 +314,23 @@ const Documents = () => {
 						<input
 							type="text"
 							placeholder="Search documents..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
+							value={searchInput}
+							onChange={(e) => setSearchInput(e.target.value)}
 							className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 						/>
 					</div>
+					<button
+						onClick={handleSearch}
+						disabled={loading}
+						className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+					>
+						Search
+					</button>
 					<div className="relative">
 						<Filter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
 						<select
 							value={filterType}
-							onChange={(e) => setFilterType(e.target.value)}
+							onChange={(e) => handleFilterChange(e.target.value)}
 							className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 						>
 							<option value="">All Types</option>
@@ -512,6 +532,124 @@ const Documents = () => {
 							)}
 						</div>
 					))}
+				</div>
+			)}
+
+			{/* Pagination */}
+			{documentsPagination.total > 10 && (
+				<div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 rounded-b-lg">
+					<div className="flex-1 flex justify-between sm:hidden">
+						<button
+							onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+							disabled={currentPage <= 1 || loading}
+							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							Previous
+						</button>
+						<button
+							onClick={() =>
+								setCurrentPage((prev) =>
+									Math.min(documentsPagination.pages, prev + 1)
+								)
+							}
+							disabled={currentPage >= documentsPagination.pages || loading}
+							className="ml-3 relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							Next
+						</button>
+					</div>
+					<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+						<div>
+							<p className="text-sm text-gray-700 dark:text-gray-300">
+								Showing{" "}
+								<span className="font-medium">
+									{(currentPage - 1) * documentsPagination.limit + 1}
+								</span>{" "}
+								to{" "}
+								<span className="font-medium">
+									{Math.min(
+										currentPage * documentsPagination.limit,
+										documentsPagination.total
+									)}
+								</span>{" "}
+								of{" "}
+								<span className="font-medium">{documentsPagination.total}</span>{" "}
+								results
+							</p>
+						</div>
+						<div>
+							<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+								<button
+									onClick={() =>
+										setCurrentPage((prev) => Math.max(1, prev - 1))
+									}
+									disabled={currentPage <= 1 || loading}
+									className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<span className="sr-only">Previous</span>
+									<svg
+										className="h-5 w-5"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</button>
+								{/* Page numbers */}
+								{Array.from(
+									{ length: Math.min(5, documentsPagination.pages) },
+									(_, i) => {
+										const pageNum =
+											Math.max(
+												1,
+												Math.min(documentsPagination.pages - 4, currentPage - 2)
+											) + i;
+										if (pageNum > documentsPagination.pages) return null;
+										return (
+											<button
+												key={pageNum}
+												onClick={() => setCurrentPage(pageNum)}
+												disabled={loading}
+												className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+													currentPage === pageNum
+														? "z-10 bg-blue-50 dark:bg-blue-900/50 border-blue-500 text-blue-600 dark:text-blue-400"
+														: "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600"
+												} disabled:opacity-50 disabled:cursor-not-allowed`}
+											>
+												{pageNum}
+											</button>
+										);
+									}
+								)}
+								<button
+									onClick={() =>
+										setCurrentPage((prev) =>
+											Math.min(documentsPagination.pages, prev + 1)
+										)
+									}
+									disabled={currentPage >= documentsPagination.pages || loading}
+									className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<span className="sr-only">Next</span>
+									<svg
+										className="h-5 w-5"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											fillRule="evenodd"
+											d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</button>
+							</nav>
+						</div>
+					</div>
 				</div>
 			)}
 

@@ -41,11 +41,7 @@ router
 			body("customCode")
 				.optional()
 				.isLength({ min: 3, max: 20 })
-				.withMessage("Custom code must be between 3 and 20 characters")
-				.matches(/^[a-zA-Z0-9_-]+$/)
-				.withMessage(
-					"Custom code can only contain letters, numbers, hyphens, and underscores"
-				),
+				.withMessage("Custom code must be between 3 and 20 characters"),
 			body("expirationDate")
 				.optional()
 				.isISO8601()
