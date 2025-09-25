@@ -6,6 +6,9 @@ const API_BASE_URL =
 
 console.log("Services API_BASE_URL:", API_BASE_URL);
 
+// Export the base URL for use in components that need direct fetch calls
+export { API_BASE_URL };
+
 // Create axios instance
 const api = axios.create({
 	baseURL: API_BASE_URL,

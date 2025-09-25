@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../../services/api";
 import {
 	Building2,
 	Plus,
@@ -43,7 +44,7 @@ const AdminOrganizations = () => {
 				token ? "Present" : "Missing"
 			);
 
-			const response = await fetch("/api/organizations/admin", {
+			const response = await fetch(`${API_BASE_URL}/organizations/admin`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -88,8 +89,8 @@ const AdminOrganizations = () => {
 		try {
 			const token = localStorage.getItem("token");
 			const url = editingOrg
-				? `/api/organizations/${editingOrg._id}`
-				: "/api/organizations";
+				? `${API_BASE_URL}/organizations/${editingOrg._id}`
+				: `${API_BASE_URL}/organizations`;
 			const method = editingOrg ? "PUT" : "POST";
 
 			console.log("Making request:", { url, method, formData });
@@ -147,9 +148,12 @@ const AdminOrganizations = () => {
 
 		try {
 			const token = localStorage.getItem("token");
-			console.log("Sending DELETE request to:", `/api/organizations/${orgId}`);
+			console.log(
+				"Sending DELETE request to:",
+				`${API_BASE_URL}/organizations/${orgId}`
+			);
 
-			const response = await fetch(`/api/organizations/${orgId}`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${orgId}`, {
 				method: "DELETE",
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -213,7 +217,7 @@ const AdminOrganizations = () => {
 		});
 
 		try {
-			const response = await fetch(`/api/organizations/${orgId}`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${orgId}`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
