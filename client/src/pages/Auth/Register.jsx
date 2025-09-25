@@ -85,7 +85,7 @@ const Register = () => {
 		setEmailValidation({ isValidating: true, isValid: null, message: "" });
 
 		try {
-			const url = `/api/organizations/validate-domain/${emailDomain}`;
+			const url = `${API_BASE_URL}/organizations/validate-domain/${emailDomain}`;
 			console.log("Making API call to:", url);
 
 			const response = await fetch(url);
