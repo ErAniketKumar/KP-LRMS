@@ -1,7 +1,14 @@
 {
-  "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+    "installCommand": "npm install --legacy-peer-deps",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "redirects": [
+        {
+            "source": "/s/:shortCode",
+            "destination": "https://kplrms.vercel.app/s/:shortCode",
+            "permanent": false
+        }
+    ],
     "rewrites": [
         {
             "source": "/(.*)",

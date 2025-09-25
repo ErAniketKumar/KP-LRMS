@@ -165,7 +165,7 @@ shortUrlSchema.virtual("shortUrl").get(function () {
 		? process.env.FRONTEND_URL.replace(/^https?:\/\//, "")
 		: this.customDomain && this.customDomain !== "rlms.short"
 		? this.customDomain
-		: "kplrms.vercel.app";
+		: "kp-ani-lrms.vercel.app";
 	return `https://${domain}/s/${this.shortCode}`;
 });
 
