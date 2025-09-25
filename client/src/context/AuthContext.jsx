@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, {
+	createContext,
+	useContext,
+	useReducer,
+	useEffect,
+	useCallback,
+} from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -254,7 +260,7 @@ export const AuthProvider = ({ children }) => {
 		}
 	};
 
-	const verifyEmail = async (token) => {
+	const verifyEmail = useCallback(async (token) => {
 		try {
 			dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 			dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
@@ -272,7 +278,7 @@ export const AuthProvider = ({ children }) => {
 			toast.error(message);
 			return { success: false, error: message };
 		}
-	};
+	}, []);
 
 	const updateProfile = async (profileData) => {
 		try {
@@ -311,7 +317,7 @@ export const AuthProvider = ({ children }) => {
 		}
 	};
 
-	const resendVerification = async (email) => {
+	const resendVerification = useCallback(async (email) => {
 		try {
 			dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 			dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
@@ -329,7 +335,7 @@ export const AuthProvider = ({ children }) => {
 			toast.error(message);
 			return { success: false, error: message };
 		}
-	};
+	}, []);
 
 	// Clear error function
 	const clearError = () => {
