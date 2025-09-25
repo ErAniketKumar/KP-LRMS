@@ -23,6 +23,17 @@ const Links = () => {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterCategory, setFilterCategory] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
+	const [searchInput, setSearchInput] = useState("");
+
+	const handleSearch = () => {
+		setSearchTerm(searchInput);
+		setCurrentPage(1);
+	};
+
+	const handleFilterChange = (category) => {
+		setFilterCategory(category);
+		setCurrentPage(1);
+	};
 
 	// Helper function to format category display names
 	const formatCategoryName = (category) => {
@@ -187,16 +198,23 @@ const Links = () => {
 						<input
 							type="text"
 							placeholder="Search links..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+							value={searchInput}
+							onChange={(e) => setSearchInput(e.target.value)}
+							onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+							className="w-full pl-10 pr-20 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 						/>
+						<button
+							onClick={handleSearch}
+							className="absolute right-2 top-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-md transition-colors"
+						>
+							Search
+						</button>
 					</div>
 					<div className="relative">
 						<Filter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
 						<select
 							value={filterCategory}
-							onChange={(e) => setFilterCategory(e.target.value)}
+							onChange={(e) => handleFilterChange(e.target.value)}
 							className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
 						>
 							<option value="">All Categories</option>
@@ -329,122 +347,6 @@ const Links = () => {
 							</div>
 						</div>
 					))}
-				</div>
-			)}
-
-			{/* Pagination */}
-			{linksPagination.total > 10 && (
-				<div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 rounded-b-lg">
-					<div className="flex-1 flex justify-between sm:hidden">
-						<button
-							onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-							disabled={currentPage <= 1}
-							className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							Previous
-						</button>
-						<button
-							onClick={() =>
-								setCurrentPage((prev) =>
-									Math.min(linksPagination.pages, prev + 1)
-								)
-							}
-							disabled={currentPage >= linksPagination.pages}
-							className="ml-3 relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							Next
-						</button>
-					</div>
-					<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-						<div>
-							<p className="text-sm text-gray-700 dark:text-gray-300">
-								Showing{" "}
-								<span className="font-medium">
-									{(currentPage - 1) * linksPagination.limit + 1}
-								</span>{" "}
-								to{" "}
-								<span className="font-medium">
-									{Math.min(
-										currentPage * linksPagination.limit,
-										linksPagination.total
-									)}
-								</span>{" "}
-								of <span className="font-medium">{linksPagination.total}</span>{" "}
-								results
-							</p>
-						</div>
-						<div>
-							<nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-								<button
-									onClick={() =>
-										setCurrentPage((prev) => Math.max(1, prev - 1))
-									}
-									disabled={currentPage <= 1}
-									className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-								>
-									<span className="sr-only">Previous</span>
-									<svg
-										className="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											fillRule="evenodd"
-											d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								</button>
-								{/* Page numbers */}
-								{Array.from(
-									{ length: Math.min(5, linksPagination.pages) },
-									(_, i) => {
-										const pageNum =
-											Math.max(
-												1,
-												Math.min(linksPagination.pages - 4, currentPage - 2)
-											) + i;
-										if (pageNum > linksPagination.pages) return null;
-										return (
-											<button
-												key={pageNum}
-												onClick={() => setCurrentPage(pageNum)}
-												className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-													currentPage === pageNum
-														? "z-10 bg-indigo-50 dark:bg-indigo-900/50 border-indigo-500 text-indigo-600 dark:text-indigo-400"
-														: "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600"
-												}`}
-											>
-												{pageNum}
-											</button>
-										);
-									}
-								)}
-								<button
-									onClick={() =>
-										setCurrentPage((prev) =>
-											Math.min(linksPagination.pages, prev + 1)
-										)
-									}
-									disabled={currentPage >= linksPagination.pages}
-									className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-								>
-									<span className="sr-only">Next</span>
-									<svg
-										className="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											fillRule="evenodd"
-											d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								</button>
-							</nav>
-						</div>
-					</div>
 				</div>
 			)}
 

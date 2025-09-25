@@ -28,7 +28,9 @@ const shortUrlSchema = new mongoose.Schema(
 		// Custom domain (optional)
 		customDomain: {
 			type: String,
-			default: "rlms.short",
+			default: process.env.FRONTEND_URL
+				? process.env.FRONTEND_URL.replace(/^https?:\/\//, "")
+				: "kp-ani-lrms.vercel.app",
 		},
 
 		// Metadata
@@ -159,7 +161,12 @@ shortUrlSchema.index({ clickCount: -1 });
 
 // Virtual for full short URL
 shortUrlSchema.virtual("shortUrl").get(function () {
-	return `https://${this.customDomain}/${this.shortCode}`;
+	const domain = process.env.FRONTEND_URL
+		? process.env.FRONTEND_URL.replace(/^https?:\/\//, "")
+		: this.customDomain && this.customDomain !== "rlms.short"
+		? this.customDomain
+		: "kplrms.vercel.app";
+	return `https://${domain}/s/${this.shortCode}`;
 });
 
 // Virtual to check if URL is expired

@@ -75,8 +75,9 @@ app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/organizations", require("./routes/organizations"));
 app.use("/api/shorturl", require("./routes/shorturl"));
 
-// Public short URL redirect route
-app.use("/s", require("./routes/shorturl"));
+// Public short URL redirect route (separate from API routes to avoid conflicts)
+const { redirectShortUrl } = require("./controllers/shorturl");
+app.get("/s/:shortCode", redirectShortUrl);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

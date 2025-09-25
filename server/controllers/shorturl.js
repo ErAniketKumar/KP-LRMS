@@ -303,26 +303,89 @@ const redirectShortUrl = async (req, res) => {
 		});
 
 		if (!shortUrl) {
-			return res.status(404).json({
-				success: false,
-				message: "Short URL not found or inactive",
-			});
+			return res.status(404).send(`
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Short URL Not Found</title>
+					<style>
+						body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+						.container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+						h1 { color: #e74c3c; margin-bottom: 20px; }
+						p { color: #666; line-height: 1.6; }
+						.home-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+						.home-link:hover { background: #2980b9; }
+					</style>
+				</head>
+				<body>
+					<div class="container">
+						<h1>Short URL Not Found</h1>
+						<p>The short URL you're looking for doesn't exist or has been deactivated.</p>
+						<p>Please check the URL and try again, or <a href="/" class="home-link">go to homepage</a>.</p>
+					</div>
+				</body>
+				</html>
+			`);
 		}
 
 		// Check expiration
 		if (shortUrl.expirationDate && new Date() > shortUrl.expirationDate) {
-			return res.status(410).json({
-				success: false,
-				message: "Short URL has expired",
-			});
+			return res.status(410).send(`
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Short URL Expired</title>
+					<style>
+						body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+						.container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+						h1 { color: #e67e22; margin-bottom: 20px; }
+						p { color: #666; line-height: 1.6; }
+						.home-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+						.home-link:hover { background: #2980b9; }
+					</style>
+				</head>
+				<body>
+					<div class="container">
+						<h1>Short URL Expired</h1>
+						<p>This short URL has expired and is no longer available.</p>
+						<p>Please contact the creator for a new link, or <a href="/" class="home-link">go to homepage</a>.</p>
+					</div>
+				</body>
+				</html>
+			`);
 		}
 
 		// Check max clicks
 		if (shortUrl.maxClicks && shortUrl.clickCount >= shortUrl.maxClicks) {
-			return res.status(410).json({
-				success: false,
-				message: "Short URL has reached maximum clicks",
-			});
+			return res.status(410).send(`
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Short URL Limit Reached</title>
+					<style>
+						body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+						.container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+						h1 { color: #f39c12; margin-bottom: 20px; }
+						p { color: #666; line-height: 1.6; }
+						.home-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+						.home-link:hover { background: #2980b9; }
+					</style>
+				</head>
+				<body>
+					<div class="container">
+						<h1>Short URL Limit Reached</h1>
+						<p>This short URL has reached its maximum number of clicks and is no longer available.</p>
+						<p>Please contact the creator for a new link, or <a href="/" class="home-link">go to homepage</a>.</p>
+					</div>
+				</body>
+				</html>
+			`);
 		}
 
 		// Parse user agent
@@ -361,10 +424,31 @@ const redirectShortUrl = async (req, res) => {
 		res.redirect(shortUrl.originalUrl);
 	} catch (error) {
 		console.error("Redirect short URL error:", error);
-		res.status(500).json({
-			success: false,
-			message: "Server error while redirecting",
-		});
+		res.status(500).send(`
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>Server Error</title>
+				<style>
+					body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }
+					.container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+					h1 { color: #e74c3c; margin-bottom: 20px; }
+					p { color: #666; line-height: 1.6; }
+					.home-link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+					.home-link:hover { background: #2980b9; }
+				</style>
+			</head>
+			<body>
+				<div class="container">
+					<h1>Server Error</h1>
+					<p>Something went wrong while processing your request. Please try again later.</p>
+					<p><a href="/" class="home-link">Go to homepage</a></p>
+				</div>
+			</body>
+			</html>
+		`);
 	}
 };
 
