@@ -74,10 +74,10 @@ const getStats = async (req, res) => {
 				: Todo.countDocuments({ createdBy: userId }),
 			Credential.countDocuments(credentialQuery),
 			isAdmin
-				? Todo.countDocuments({ status: { $ne: "completed" } })
+				? Todo.countDocuments({ status: { $in: ["to-do", "in-progress"] } })
 				: Todo.countDocuments({
 						createdBy: userId,
-						status: { $ne: "completed" },
+						status: { $in: ["to-do", "in-progress"] },
 				  }),
 		]);
 

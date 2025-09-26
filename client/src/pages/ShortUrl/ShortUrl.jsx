@@ -306,7 +306,9 @@ const ShortUrl = () => {
 														rel="noopener noreferrer"
 														className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 truncate flex items-center space-x-1"
 													>
-														<span className="truncate">{url.originalUrl}</span>
+														<span className="truncate max-w-64">
+															{url.originalUrl}
+														</span>
 														<ExternalLink className="h-3 w-3 flex-shrink-0" />
 													</a>
 												</div>

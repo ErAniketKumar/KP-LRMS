@@ -296,7 +296,7 @@ const Credentials = () => {
 										className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
 									>
 										<Globe className="h-4 w-4 mr-2" />
-										<span className="truncate">{credential.url}</span>
+										<span className="truncate max-w-48">{credential.url}</span>
 									</a>
 								</div>
 							)}
@@ -308,7 +308,7 @@ const Credentials = () => {
 											<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
 												Username:
 											</span>
-											<span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+											<span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-32">
 												{credential.username}
 											</span>
 										</div>
@@ -337,7 +337,7 @@ const Credentials = () => {
 											<span className="text-sm font-medium text-gray-700 dark:text-gray-300">
 												Email:
 											</span>
-											<span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+											<span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-32">
 												{credential.email}
 											</span>
 										</div>

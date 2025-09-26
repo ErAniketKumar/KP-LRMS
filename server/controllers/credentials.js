@@ -27,7 +27,19 @@ const decrypt = (text) => {
 // @access  Private
 const getCredentials = async (req, res) => {
 	try {
-		const { includePasswords } = req.query;
+		const {
+			category,
+			search,
+			sortBy = "createdAt",
+			sortOrder = "desc",
+			includePasswords,
+		} = req.query;
+		const page = parseInt(req.query.page || 1, 10);
+		const limitParam = parseInt(req.query.limit || 0, 10);
+		const isAdmin = req.user.role === "admin";
+		// If limit not provided, default to 10 for non-admins, much higher for admins
+		const limit = limitParam || (isAdmin ? 1000 : 10);
+
 		// Build visibility-aware query
 		const query = {};
 		if (req.user.role === "admin") {
@@ -44,9 +56,42 @@ const getCredentials = async (req, res) => {
 			];
 		}
 
+		// Category filter
+		if (category && category !== "all") {
+			query.category = category;
+		}
+
+		// Search filter
+		if (search) {
+			query.$or = query.$or || [];
+			const searchConditions = [
+				{ title: { $regex: search, $options: "i" } },
+				{ username: { $regex: search, $options: "i" } },
+				{ email: { $regex: search, $options: "i" } },
+				{ url: { $regex: search, $options: "i" } },
+				{ notes: { $regex: search, $options: "i" } },
+			];
+
+			if (query.$or.length > 0) {
+				// If there are existing visibility conditions, combine them with search
+				query.$and = [{ $or: query.$or }, { $or: searchConditions }];
+				delete query.$or;
+			} else {
+				query.$or = searchConditions;
+			}
+		}
+
+		// Build sort object
+		const sort = {};
+		sort[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+		// Execute query with pagination
+		const total = await Credential.countDocuments(query);
 		const credentials = await Credential.find(query)
 			.populate("addedBy", "fullName email")
-			.sort({ createdAt: -1 });
+			.sort(sort)
+			.limit(limit)
+			.skip((page - 1) * limit);
 
 		// Process credentials based on password inclusion request
 		const processedCredentials = credentials.map((cred) => {
@@ -77,9 +122,19 @@ const getCredentials = async (req, res) => {
 
 			return credObj;
 		});
+
+		// Calculate pagination info
+		const pages = Math.ceil(total / limit);
+
 		res.status(200).json({
 			success: true,
-			count: credentials.length,
+			count: processedCredentials.length,
+			pagination: {
+				page,
+				limit,
+				total,
+				pages,
+			},
 			data: processedCredentials,
 		});
 	} catch (error) {
